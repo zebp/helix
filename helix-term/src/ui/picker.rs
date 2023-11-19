@@ -781,6 +781,7 @@ impl<T: Item + 'static> Picker<T> {
                 &cx.editor.theme,
                 &mut decorations,
                 &mut [],
+                true,
             );
         }
     }

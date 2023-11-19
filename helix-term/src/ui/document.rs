@@ -9,7 +9,7 @@ use helix_core::text_annotations::TextAnnotations;
 use helix_core::{visual_offset_from_block, Position, RopeSlice};
 use helix_view::editor::{WhitespaceConfig, WhitespaceRenderValue};
 use helix_view::graphics::Rect;
-use helix_view::theme::Style;
+use helix_view::theme::{Color, Style};
 use helix_view::view::ViewPosition;
 use helix_view::Document;
 use helix_view::Theme;
@@ -101,6 +101,7 @@ pub fn render_document(
     theme: &Theme,
     line_decoration: &mut [Box<dyn LineDecoration + '_>],
     translated_positions: &mut [TranslatedPosition],
+    is_focused: bool,
 ) {
     let mut renderer = TextRenderer::new(surface, doc, theme, offset.horizontal_offset, viewport);
     render_text(
@@ -113,6 +114,7 @@ pub fn render_document(
         theme,
         line_decoration,
         translated_positions,
+        is_focused,
     )
 }
 
@@ -161,6 +163,7 @@ pub fn render_text<'t>(
     theme: &Theme,
     line_decorations: &mut [Box<dyn LineDecoration + '_>],
     translated_positions: &mut [TranslatedPosition],
+    is_focused: bool,
 ) {
     let (
         Position {
@@ -178,12 +181,26 @@ pub fn render_text<'t>(
 
     let (mut formatter, mut first_visible_char_idx) =
         DocumentFormatter::new_at_prev_checkpoint(text, text_fmt, text_annotations, offset.anchor);
-    let mut styles = StyleIter {
+    let styles = StyleIter {
         text_style: renderer.text_style,
         active_highlights: Vec::with_capacity(64),
         highlight_iter,
         theme,
     };
+
+    let mut styles = styles.into_iter().map(|(style, idx)| {
+        let mut style = style;
+
+        if !is_focused {
+            if let Some(Color::Rgb(r, g, b)) = style.fg.as_mut() {
+                *r = (*r as f32 * 0.8) as u8;
+                *g = (*g as f32 * 0.8) as u8;
+                *b = (*b as f32 * 0.8) as u8;
+            }
+        }
+
+        (style, idx)
+    });
 
     let mut last_line_pos = LinePos {
         first_visual_line: false,

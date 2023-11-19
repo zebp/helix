@@ -201,6 +201,7 @@ impl EditorView {
             theme,
             &mut line_decorations,
             &mut translated_positions,
+            is_focused,
         );
         Self::render_rulers(editor, doc, view, inner, surface, theme);
 
